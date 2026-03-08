@@ -1,0 +1,7 @@
+# Configuration de l'application.
+# Modifier app_name pour changer le titre affiche dans la fenetre.
+# ffmpeg est fourni en portable via imageio-ffmpeg (pas d'installation systeme).
+
+app_name: "GRABYT"
+default_urls_file: "urls.txt"
+downloads_dir: "downloads"

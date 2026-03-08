@@ -1,0 +1,1 @@
+# Module interface graphique Qt.

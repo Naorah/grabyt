@@ -1,8 +1,10 @@
 # Fenetre principale: selection fichier, initialisation, telechargement et progression.
 
+import os
 from pathlib import Path
 
-from PyQt6.QtCore import QThread, pyqtSignal, Qt
+from PyQt6.QtCore import QThread, pyqtSignal, Qt, QUrl
+from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QFileDialog,
     QGroupBox,
@@ -19,6 +21,7 @@ from src.config_loader import load_config
 from src.core.downloader import Downloader, DownloadProgress
 from src.core.url_parser import parse_urls_from_file
 from src.core.url_validator import ValidationResult, validate_urls
+from src.ui.icons import get_open_file_icon
 from src.ui.progress_window import ProgressWindow
 from src.ui.styles import MAIN_STYLESHEET
 from src.ui.title_bar import TitleBar
@@ -113,8 +116,15 @@ class MainWindow(QMainWindow):
         self._file_edit.setText(self._urls_file)
         self._browse_btn = QPushButton("Parcourir")
         self._browse_btn.clicked.connect(self._on_browse)
+        self._open_file_btn = QPushButton()
+        self._open_file_btn.setObjectName("openFileButton")
+        self._open_file_btn.setFixedSize(40, 40)
+        self._open_file_btn.setIcon(get_open_file_icon(20))
+        self._open_file_btn.setToolTip("Ouvrir le fichier dans l'éditeur par défaut")
+        self._open_file_btn.clicked.connect(self._on_open_file)
         file_layout.addWidget(self._file_edit)
         file_layout.addWidget(self._browse_btn)
+        file_layout.addWidget(self._open_file_btn)
         content_layout.addWidget(file_group)
 
         # Initialisation: bouton et resultats
@@ -139,6 +149,16 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(content)
         self.setStyleSheet(MAIN_STYLESHEET)
+
+    def _on_open_file(self) -> None:
+        path = self._file_edit.text().strip()
+        if not path:
+            return
+        if not os.path.isabs(path):
+            path = os.path.abspath(path)
+        if not os.path.isfile(path):
+            return
+        QDesktopServices.openUrl(QUrl.fromLocalFile(path))
 
     def _on_browse(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
@@ -198,9 +218,8 @@ class MainWindow(QMainWindow):
         self._start_btn.setEnabled(False)
         self._start_btn.setText("Telechargement en cours...")
 
-        progress_title = f"{self._config['app_name']} - Progression"
         self._progress_window = ProgressWindow(
-            self, title=progress_title, downloads_dir=out_dir
+            self, title="Progression", downloads_dir=out_dir
         )
         self._progress_window.reset()
         self._progress_window.show()

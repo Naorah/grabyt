@@ -1,5 +1,8 @@
-REMPLACER CES
-LIGNES
-PAR DES URL
-YOUTUBE
-UNE PAR LIGNE
+# Liste d'URLs YouTube (une par ligne).
+# Les lignes commençant par # sont ignorées.
+# Exemple :
+# https://www.youtube.com/watch?v=xxxxx
+https://www.youtube.com/watch?v=Y7rT0KCadnQ&list=PLsAmktyZjZdGxvfsQyDSETtc_8P1nonFo&index=2
+https://www.youtube.com/watch?v=361GUUBHH5Y&list=PLsAmktyZjZdGxvfsQyDSETtc_8P1nonFo&index=3
+https://www.youtube.com/watch?v=7DjspOrDTUk
+https://www.youtube.com/watch?v=E2XsRDGYHUU

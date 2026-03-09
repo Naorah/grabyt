@@ -6,6 +6,7 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
+    QGroupBox,
     QHBoxLayout,
     QLabel,
     QProgressBar,
@@ -33,6 +34,7 @@ class ProgressWindow(QWidget):
         downloads_dir: str = "",
     ) -> None:
         super().__init__(parent)
+        self.setObjectName("progressWindow")
         self.setWindowTitle(title)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
         self.setMinimumSize(420, 280)
@@ -47,9 +49,14 @@ class ProgressWindow(QWidget):
         main_layout.addWidget(self._title_bar)
 
         content = QWidget()
-        layout = QVBoxLayout(content)
+        content_layout = QVBoxLayout(content)
+        content_layout.setSpacing(16)
+        content_layout.setContentsMargins(24, 24, 24, 24)
+
+        process_group = QGroupBox("Process")
+        process_group.setObjectName("processGroup")
+        layout = QVBoxLayout(process_group)
         layout.setSpacing(16)
-        layout.setContentsMargins(24, 24, 24, 24)
 
         layout.addWidget(QLabel("En cours"))
         self._current_track_label = QLabel("--")
@@ -74,14 +81,32 @@ class ProgressWindow(QWidget):
 
         row_counts = QHBoxLayout()
         row_counts.setSpacing(20)
-        self._count_dl_label = QLabel("Telecharges: 0")
+        self._dot_dl = QWidget()
+        self._dot_dl.setObjectName("progressDotGreen")
+        self._dot_dl.setFixedSize(12, 12)
+        self._count_dl_label = QLabel("0")
         self._count_dl_label.setObjectName("secondaryLabel")
-        self._count_err_label = QLabel("Erreurs: 0")
+        self._dot_err = QWidget()
+        self._dot_err.setObjectName("progressDotRed")
+        self._dot_err.setFixedSize(12, 12)
+        self._count_err_label = QLabel("0")
         self._count_err_label.setObjectName("secondaryLabel")
-        self._count_rest_label = QLabel("Restant: 0")
+        self._dot_rest = QWidget()
+        self._dot_rest.setObjectName("progressDotBlue")
+        self._dot_rest.setFixedSize(12, 12)
+        self._count_rest_label = QLabel("0")
         self._count_rest_label.setObjectName("secondaryLabel")
-        for lbl in (self._count_dl_label, self._count_err_label, self._count_rest_label):
-            row_counts.addWidget(lbl)
+        for dot, lbl in (
+            (self._dot_dl, self._count_dl_label),
+            (self._dot_err, self._count_err_label),
+            (self._dot_rest, self._count_rest_label),
+        ):
+            pair = QHBoxLayout()
+            pair.setSpacing(4)
+            pair.setContentsMargins(0, 0, 0, 0)
+            pair.addWidget(dot)
+            pair.addWidget(lbl)
+            row_counts.addLayout(pair)
         row_counts.addStretch()
         layout.addLayout(row_counts)
 
@@ -101,6 +126,7 @@ class ProgressWindow(QWidget):
         buttons_layout.addWidget(self._open_folder_btn)
         layout.addWidget(self._buttons_widget)
 
+        content_layout.addWidget(process_group)
         main_layout.addWidget(content)
         self.setStyleSheet(MAIN_STYLESHEET)
 
@@ -119,9 +145,9 @@ class ProgressWindow(QWidget):
         self._current_track_label.setText(title)
         self._current_percent_label.setText(f"{prog.current_percent:.0f} %")
         self._progress_bar.setValue(int(prog.current_percent))
-        self._count_dl_label.setText(f"Telecharges: {prog.downloaded_count}")
-        self._count_err_label.setText(f"Erreurs: {prog.error_count}")
-        self._count_rest_label.setText(f"Restant: {prog.remaining_count}")
+        self._count_dl_label.setText(str(prog.downloaded_count))
+        self._count_err_label.setText(str(prog.error_count))
+        self._count_rest_label.setText(str(prog.remaining_count))
         if prog.eta_seconds is not None and prog.eta_seconds >= 0:
             eta_m = int(prog.eta_seconds // 60)
             eta_s = int(prog.eta_seconds % 60)
@@ -133,9 +159,9 @@ class ProgressWindow(QWidget):
         """Affiche l'etat final et active le bouton Vers les musiques."""
         self._progress_bar.setValue(100)
         self._eta_label.setText("Termine.")
-        self._count_dl_label.setText(f"Telecharges: {downloaded}")
-        self._count_err_label.setText(f"Erreurs: {errors}")
-        self._count_rest_label.setText("Restant: 0")
+        self._count_dl_label.setText(str(downloaded))
+        self._count_err_label.setText(str(errors))
+        self._count_rest_label.setText("0")
         self._open_folder_btn.setEnabled(True)
 
     def reset(self) -> None:
@@ -143,8 +169,8 @@ class ProgressWindow(QWidget):
         self._current_track_label.setText("--")
         self._current_percent_label.setText("0 %")
         self._progress_bar.setValue(0)
-        self._count_dl_label.setText("Telecharges: 0")
-        self._count_err_label.setText("Erreurs: 0")
-        self._count_rest_label.setText("Restant: 0")
+        self._count_dl_label.setText("0")
+        self._count_err_label.setText("0")
+        self._count_rest_label.setText("0")
         self._eta_label.setText("ETA: --")
         self._open_folder_btn.setEnabled(False)

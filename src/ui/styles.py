@@ -10,6 +10,7 @@ QWidget {
 
 QMainWindow {
     background-color: #faf8f6;
+    border: 1px solid #e8e4e0;
 }
 
 QPushButton {
@@ -55,6 +56,15 @@ QPushButton#startButton:pressed {
 QPushButton#startButton:disabled {
     background-color: #c5e0d6;
     color: #ffffff;
+}
+
+QPushButton#openFileButton {
+    min-width: 40px;
+    max-width: 40px;
+    min-height: 40px;
+    max-height: 40px;
+    border-radius: 20px;
+    padding: 0;
 }
 
 QLineEdit {
@@ -141,6 +151,62 @@ QScrollArea {
 QFrame#titleBar {
     background-color: #ffffff;
     border-bottom: 1px solid #e8e4e0;
+}
+
+QWidget#progressWindow {
+    border: 1px solid #e8e4e0;
+}
+
+QWidget#progressDotGreen {
+    background-color: #4caf50;
+    border-radius: 6px;
+}
+
+QWidget#progressDotRed {
+    background-color: #e57373;
+    border-radius: 6px;
+}
+
+QWidget#progressDotBlue {
+    background-color: #64b5f6;
+    border-radius: 6px;
+}
+
+QGroupBox#processGroup QLabel,
+QGroupBox#processGroup QProgressBar,
+QGroupBox#processGroup QWidget {
+    background-color: transparent;
+}
+
+QGroupBox#processGroup QPushButton#startButton {
+    background-color: #8bc4b0;
+    color: #ffffff;
+    border: none;
+}
+
+QGroupBox#processGroup QPushButton#startButton:hover {
+    background-color: #7ab39f;
+}
+
+QGroupBox#processGroup QPushButton#startButton:pressed {
+    background-color: #6aa28e;
+}
+
+QGroupBox#processGroup QPushButton#startButton:disabled {
+    background-color: #c5e0d6;
+    color: #ffffff;
+}
+
+QGroupBox#processGroup QWidget#progressDotGreen {
+    background-color: #4caf50;
+}
+
+QGroupBox#processGroup QWidget#progressDotRed {
+    background-color: #e57373;
+}
+
+QGroupBox#processGroup QWidget#progressDotBlue {
+    background-color: #64b5f6;
 }
 """
 

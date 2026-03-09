@@ -34,6 +34,9 @@ ICON_SIZE = 12
 # Icone de l'application (affichée a gauche du titre dans le header)
 SVG_APP = b"""<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.803 9.997L9.75 7.69C9.48 7.032 9.12 6.6 8.4 6.6m0 0H5.25C3.711 6.6 3 7.05 3 8.85c.075 1.614.827 3.266 1.915 4.462M8.4 6.6c0-1.395.216-3.6-1.8-3.6c-1.8 0-2.25 2.029-2.25 3.676M14 13.21l2.311 1.04c.657.27 1.089.63 1.089 1.35m0 0v3.15c0 1.539-.45 2.25-2.25 2.25c-1.614-.076-3.264-.824-4.459-1.912M17.4 15.6c1.395 0 3.6-.216 3.6 1.8c0 1.8-2.029 2.25-3.676 2.25M5.34 13l5.211-2.89c1.701-.945 4.311 1.602 3.339 3.34l-2.898 5.228C9.12 22.044 1.911 14.908 5.34 13"/></svg>"""
 
+# Icone "ouvrir le fichier texte" (bouton circulaire a cote du champ fichier URLs)
+SVG_OPEN_FILE = b"""<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M14.186 2.753v3.596c0 .487.195.955.54 1.3a1.85 1.85 0 0 0 1.306.539h4.125"/><path d="M20.25 8.568v8.568a4.25 4.25 0 0 1-1.362 2.97a4.28 4.28 0 0 1-3.072 1.14h-7.59a4.3 4.3 0 0 1-3.1-1.124a4.26 4.26 0 0 1-1.376-2.986V6.862a4.25 4.25 0 0 1 1.362-2.97a4.28 4.28 0 0 1 3.072-1.14h5.714a3.5 3.5 0 0 1 2.361.905l2.96 2.722a2.97 2.97 0 0 1 1.031 2.189M7.647 7.647h3.265M7.647 12h8.706m-8.706 4.353h8.706"/></g></svg>"""
+
 APP_ICON_SIZE = 20
 
 
@@ -55,3 +58,8 @@ def get_title_bar_icons() -> tuple[QIcon, QIcon, QIcon]:
         _icon_from_svg(SVG_MAXIMIZE, ICON_SIZE),
         _icon_from_svg(SVG_CLOSE, ICON_SIZE),
     )
+
+
+def get_open_file_icon(size: int = 20, color: str = "#2c2c2c") -> QIcon:
+    """Icone pour le bouton 'ouvrir le fichier URLs' (bouton circulaire)."""
+    return _icon_from_svg(SVG_OPEN_FILE, size, color)

@@ -37,6 +37,9 @@ SVG_APP = b"""<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" vie
 # Icone "ouvrir le fichier texte" (bouton circulaire a cote du champ fichier URLs)
 SVG_OPEN_FILE = b"""<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"><path d="M14.186 2.753v3.596c0 .487.195.955.54 1.3a1.85 1.85 0 0 0 1.306.539h4.125"/><path d="M20.25 8.568v8.568a4.25 4.25 0 0 1-1.362 2.97a4.28 4.28 0 0 1-3.072 1.14h-7.59a4.3 4.3 0 0 1-3.1-1.124a4.26 4.26 0 0 1-1.376-2.986V6.862a4.25 4.25 0 0 1 1.362-2.97a4.28 4.28 0 0 1 3.072-1.14h5.714a3.5 3.5 0 0 1 2.361.905l2.96 2.722a2.97 2.97 0 0 1 1.031 2.189M7.647 7.647h3.265M7.647 12h8.706m-8.706 4.353h8.706"/></g></svg>"""
 
+# Icone historique (horloge) pour le bouton en haut a gauche
+SVG_HISTORY = b"""<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 21q-3.15 0-5.575-1.912T3.275 14.2q-.1-.375.15-.687t.675-.363q.4-.05.725.15t.45.6q.6 2.25 2.475 3.675T12 19q2.925 0 4.963-2.037T19 12t-2.037-4.962T12 5q-1.725 0-3.225.8T6.25 8H8q.425 0 .713.288T9 9t-.288.713T8 10H4q-.425 0-.712-.288T3 9V5q0-.425.288-.712T4 4t.713.288T5 5v1.35q1.275-1.6 3.113-2.475T12 3q1.875 0 3.513.713t2.85 1.924t1.925 2.85T21 12t-.712 3.513t-1.925 2.85t-2.85 1.925T12 21m1-9.4l2.5 2.5q.275.275.275.7t-.275.7t-.7.275t-.7-.275l-2.8-2.8q-.15-.15-.225-.337T11 11.975V8q0-.425.288-.712T12 7t.713.288T13 8z"/></svg>"""
+
 APP_ICON_SIZE = 20
 
 
@@ -63,3 +66,8 @@ def get_title_bar_icons() -> tuple[QIcon, QIcon, QIcon]:
 def get_open_file_icon(size: int = 20, color: str = "#2c2c2c") -> QIcon:
     """Icone pour le bouton 'ouvrir le fichier URLs' (bouton circulaire)."""
     return _icon_from_svg(SVG_OPEN_FILE, size, color)
+
+
+def get_history_icon(size: int = 20, color: str = "#2c2c2c") -> QIcon:
+    """Icone pour le bouton historique (horloge) en haut a gauche."""
+    return _icon_from_svg(SVG_HISTORY, size, color)

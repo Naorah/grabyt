@@ -67,6 +67,16 @@ QPushButton#openFileButton {
     padding: 0;
 }
 
+QToolTip {
+    background-color: #ffffff;
+    color: #2c2c2c;
+    border: 1px solid #e0ddd8;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: "Segoe UI", sans-serif;
+    font-size: 12px;
+}
+
 QLineEdit {
     background-color: #ffffff;
     color: #2c2c2c;
@@ -157,6 +167,39 @@ QWidget#progressWindow {
     border: 1px solid #e8e4e0;
 }
 
+QWidget#historyWindow {
+    border: 1px solid #e8e4e0;
+}
+
+QFrame#historyCard {
+    background-color: #ffffff;
+    border: 1px solid #e8e4e0;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+QFrame#historyCard:hover {
+    border-color: #8bc4b0;
+    background-color: #f8fcfb;
+}
+
+QFrame#historyCard QLabel,
+QFrame#historyCard QLabel#historyCardUrl,
+QFrame#historyCard QLabel#historyCardMeta {
+    background-color: transparent;
+}
+
+QLabel#historyCardUrl {
+    color: #2c7a6e;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+QLabel#historyCardMeta {
+    color: #7d7d7d;
+    font-size: 12px;
+}
+
 QWidget#progressDotGreen {
     background-color: #4caf50;
     border-radius: 6px;
@@ -244,5 +287,43 @@ QPushButton#closeButton {
 
 QPushButton#closeButton:hover {
     background-color: #d97060;
+}
+"""
+
+# Scrollbar flat pour la fenetre historique
+HISTORY_SCROLLBAR_STYLE = """
+QScrollArea#historyScrollArea {
+    background-color: #faf8f6;
+    border: none;
+}
+
+QScrollArea#historyScrollArea QScrollBar:vertical {
+    background: #f0eeeb;
+    width: 10px;
+    margin: 0;
+    border: none;
+    border-radius: 5px;
+}
+
+QScrollArea#historyScrollArea QScrollBar::handle:vertical {
+    background: #d0cec9;
+    border-radius: 5px;
+    min-height: 30px;
+}
+
+QScrollArea#historyScrollArea QScrollBar::handle:vertical:hover {
+    background: #8bc4b0;
+}
+
+QScrollArea#historyScrollArea QScrollBar::add-line:vertical,
+QScrollArea#historyScrollArea QScrollBar::sub-line:vertical {
+    height: 0;
+    border: none;
+    background: none;
+}
+
+QScrollArea#historyScrollArea QScrollBar::add-page:vertical,
+QScrollArea#historyScrollArea QScrollBar::sub-page:vertical {
+    background: none;
 }
 """

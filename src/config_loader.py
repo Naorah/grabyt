@@ -26,6 +26,7 @@ def load_config() -> dict[str, Any]:
     app_name = data.get("app_name", "YT Grab")
     urls_file = data.get("default_urls_file", "urls.txt")
     downloads_dir = data.get("downloads_dir", "downloads")
+    max_concurrent = int(data.get("max_concurrent_downloads", 3))
 
     if not Path(urls_file).is_absolute():
         urls_file = str(PROJECT_ROOT / urls_file)
@@ -36,6 +37,7 @@ def load_config() -> dict[str, Any]:
         "app_name": app_name,
         "default_urls_file": urls_file,
         "downloads_dir": downloads_dir,
+        "max_concurrent_downloads": max(1, min(max_concurrent, 8)),
     }
 
 
@@ -45,4 +47,5 @@ def _default_config() -> dict[str, Any]:
         "app_name": "YT Grab",
         "default_urls_file": str(DEFAULT_URLS_FILE),
         "downloads_dir": str(DEFAULT_DOWNLOADS_DIR),
+        "max_concurrent_downloads": 3,
     }

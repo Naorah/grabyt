@@ -1,9 +1,22 @@
-# Validation des URLs YouTube (acces et format).
+# Validation des URLs YouTube (acces et format) en batch parallele.
 
 from dataclasses import dataclass
 from typing import Callable
 
 import yt_dlp
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+DEFAULT_VALIDATION_WORKERS = 6
+
+
+def _validate_one(url: str, opts: dict) -> tuple[str, bool]:
+    """Valide une URL. Retourne (url, True si valide)."""
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            ydl.extract_info(url, download=False)
+        return url, True
+    except Exception:
+        return url, False
 
 
 @dataclass
@@ -26,14 +39,16 @@ class ValidationResult:
 def validate_urls(
     urls: list[str],
     progress_callback: Callable[[int, int, str], None] | None = None,
+    max_workers: int = DEFAULT_VALIDATION_WORKERS,
 ) -> ValidationResult:
     """
-    Verifie chaque URL avec yt-dlp (extract_info sans telecharger).
-    progress_callback(current_index, total, url) est appele pour chaque URL testee.
+    Verifie les URLs en parallele (batch) avec yt-dlp (extract_info sans telecharger).
+    progress_callback(current_done, total, url) est appele a chaque URL terminee.
     """
     valid: list[str] = []
     invalid: list[str] = []
     total = len(urls)
+    done = 0
 
     opts = {
         "quiet": True,
@@ -42,14 +57,21 @@ def validate_urls(
         "skip_download": True,
     }
 
-    for i, url in enumerate(urls):
-        if progress_callback:
-            progress_callback(i + 1, total, url)
-        try:
-            with yt_dlp.YoutubeDL(opts) as ydl:
-                ydl.extract_info(url, download=False)
-            valid.append(url)
-        except Exception:
-            invalid.append(url)
+    max_workers = min(max_workers, max(1, total))
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_validate_one, url, opts): url for url in urls}
+        for future in as_completed(futures):
+            url = futures[future]
+            try:
+                _, ok = future.result()
+                if ok:
+                    valid.append(url)
+                else:
+                    invalid.append(url)
+            except Exception:
+                invalid.append(url)
+            done += 1
+            if progress_callback:
+                progress_callback(done, total, url)
 
     return ValidationResult(valid=valid, invalid=invalid, total=total)

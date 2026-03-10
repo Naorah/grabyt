@@ -21,7 +21,7 @@ class TitleBar(QFrame):
     Gere le double-clic pour restaurer/maximiser et le glisser pour deplacer.
     """
 
-    def __init__(self, parent: QWidget | None = None, title: str = ""):
+    def __init__(self, parent: QWidget | None = None, title: str = "", left_widget: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("titleBar")
         self._window = parent
@@ -30,6 +30,9 @@ class TitleBar(QFrame):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(14, 0, 14, 0)
         layout.setSpacing(10)
+
+        if left_widget is not None:
+            layout.addWidget(left_widget)
 
         self._icon_label = QLabel()
         self._icon_label.setFixedSize(18, 18)

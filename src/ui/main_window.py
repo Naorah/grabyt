@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from PyQt6.QtCore import QThread, pyqtSignal, Qt, QUrl
+from PyQt6.QtCore import QPoint, QThread, pyqtSignal, Qt, QUrl, QEvent
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QFileDialog,
@@ -12,17 +12,21 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMainWindow,
+    QProgressBar,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from src.config_loader import load_config
-from src.core.downloader import Downloader, DownloadProgress
+from src.core.download_manager import get_download_manager
+from src.core.downloader import DownloadProgress
 from src.core.url_parser import parse_urls_from_file
 from src.core.url_validator import ValidationResult, validate_urls
-from src.ui.icons import get_open_file_icon
+from src.ui.history_window import HistoryWindow
+from src.ui.icons import get_history_icon, get_open_file_icon
 from src.ui.progress_window import ProgressWindow
+from src.ui.rounded_tooltip import RoundedTooltip
 from src.ui.styles import MAIN_STYLESHEET
 from src.ui.title_bar import TitleBar
 
@@ -46,7 +50,7 @@ class ValidationWorker(QThread):
 
 
 class DownloadWorker(QThread):
-    """Thread pour lancer le telechargement."""
+    """Thread qui delegue au DownloadManager central (file + N workers, retries)."""
 
     finished = pyqtSignal(int, int)  # downloaded, errors
     progress = pyqtSignal(object)  # DownloadProgress
@@ -55,24 +59,22 @@ class DownloadWorker(QThread):
         self,
         urls: list[str],
         output_dir: str,
+        max_workers: int,
         parent: QWidget | None = None,
     ):
         super().__init__(parent)
         self._urls = urls
         self._output_dir = output_dir
-        self._downloader: Downloader | None = None
+        self._max_workers = max_workers
 
     def run(self) -> None:
-        def on_progress(prog: DownloadProgress) -> None:
-            self.progress.emit(prog)
-
-        self._downloader = Downloader(self._output_dir, progress_callback=on_progress)
-        downloaded, errors = self._downloader.download_all(self._urls)
+        manager = get_download_manager(self._max_workers)
+        manager.set_progress_callback(lambda p: self.progress.emit(p))
+        downloaded, errors = manager.run_batch(self._urls, self._output_dir)
         self.finished.emit(downloaded, errors)
 
     def cancel(self) -> None:
-        if self._downloader:
-            self._downloader.cancel()
+        get_download_manager().cancel()
 
 
 class MainWindow(QMainWindow):
@@ -110,7 +112,8 @@ class MainWindow(QMainWindow):
 
         # Selection du fichier
         file_group = QGroupBox("Fichier de liens")
-        file_layout = QHBoxLayout(file_group)
+        file_layout = QVBoxLayout(file_group)
+        row_file = QHBoxLayout()
         self._file_edit = QLineEdit()
         self._file_edit.setPlaceholderText("Chemin vers le fichier URLs...")
         self._file_edit.setText(self._urls_file)
@@ -120,35 +123,76 @@ class MainWindow(QMainWindow):
         self._open_file_btn.setObjectName("openFileButton")
         self._open_file_btn.setFixedSize(40, 40)
         self._open_file_btn.setIcon(get_open_file_icon(20))
-        self._open_file_btn.setToolTip("Ouvrir le fichier dans l'éditeur par défaut")
         self._open_file_btn.clicked.connect(self._on_open_file)
-        file_layout.addWidget(self._file_edit)
-        file_layout.addWidget(self._browse_btn)
-        file_layout.addWidget(self._open_file_btn)
+        row_file.addWidget(self._file_edit)
+        row_file.addWidget(self._browse_btn)
+        row_file.addWidget(self._open_file_btn)
+        file_layout.addLayout(row_file)
         content_layout.addWidget(file_group)
 
-        # Initialisation: bouton et resultats
+        # Initialisation: bouton unique (init puis demarrage) + historique a droite
         init_group = QGroupBox("Initialisation")
         init_layout = QVBoxLayout(init_group)
-        self._init_btn = QPushButton("Initialiser (nombre de musiques, liens valides / non valides)")
-        self._init_btn.clicked.connect(self._on_init)
-        init_layout.addWidget(self._init_btn)
-
         self._stats_label = QLabel("Aucune initialisation effectuee.")
         self._stats_label.setObjectName("statsLabel")
         self._stats_label.setWordWrap(True)
         init_layout.addWidget(self._stats_label)
-        content_layout.addWidget(init_group)
 
-        # Bouton central de telechargement
-        self._start_btn = QPushButton("Demarrer le telechargement")
-        self._start_btn.setObjectName("startButton")
-        self._start_btn.clicked.connect(self._on_start_download)
-        self._start_btn.setEnabled(False)
-        content_layout.addWidget(self._start_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._validation_progress = QProgressBar()
+        self._validation_progress.setFixedHeight(8)
+        self._validation_progress.setRange(0, 100)
+        self._validation_progress.setValue(0)
+        self._validation_progress.setTextVisible(False)
+        self._validation_progress.hide()
+        init_layout.addWidget(self._validation_progress)
+
+        action_row = QHBoxLayout()
+        self._action_btn = QPushButton("Initialiser (nombre de musiques, liens valides / non valides)")
+        self._action_btn.clicked.connect(self._on_action_clicked)
+        action_row.addWidget(self._action_btn)
+
+        self._history_btn = QPushButton()
+        self._history_btn.setObjectName("openFileButton")
+        self._history_btn.setFixedSize(40, 40)
+        self._history_btn.setIcon(get_history_icon(20))
+        self._history_btn.clicked.connect(self._on_open_history)
+        action_row.addWidget(self._history_btn)
+        init_layout.addLayout(action_row)
+        content_layout.addWidget(init_group)
 
         main_layout.addWidget(content)
         self.setStyleSheet(MAIN_STYLESHEET)
+
+        # Tooltips arrondis (fenêtre à masque) pour les boutons circulaires
+        self._open_file_tooltip = RoundedTooltip("Ouvrir le fichier dans l'éditeur par défaut")
+        self._history_tooltip = RoundedTooltip("Historique des telechargements")
+        self._tooltip_map: dict[QWidget, RoundedTooltip] = {
+            self._open_file_btn: self._open_file_tooltip,
+            self._history_btn: self._history_tooltip,
+        }
+        self._open_file_btn.installEventFilter(self)
+        self._history_btn.installEventFilter(self)
+
+    def eventFilter(self, obj: QWidget, event: QEvent) -> bool:
+        tip = self._tooltip_map.get(obj)
+        if tip is None:
+            return super().eventFilter(obj, event)
+        if event.type() == QEvent.Type.Enter:
+            # Position en coordonnées écran : juste sous le bouton, aligné à droite
+            bottom_right = obj.mapToGlobal(obj.rect().bottomRight())
+            x = bottom_right.x() - tip.width()
+            y = bottom_right.y() + 6
+            tip.move(x, y)
+            tip.show()
+        elif event.type() == QEvent.Type.Leave:
+            tip.hide()
+        return super().eventFilter(obj, event)
+
+    def _on_open_history(self) -> None:
+        out_dir = self._config.get("downloads_dir", "downloads")
+        Path(out_dir).mkdir(parents=True, exist_ok=True)
+        win = HistoryWindow(out_dir, self)
+        win.show()
 
     def _on_open_file(self) -> None:
         path = self._file_edit.text().strip()
@@ -173,7 +217,31 @@ class MainWindow(QMainWindow):
             self._urls = []
             self._valid_urls = []
             self._stats_label.setText("Fichier modifie. Reinitialiser pour mettre a jour les statistiques.")
-            self._start_btn.setEnabled(False)
+            self._switch_action_to_init()
+
+    def _switch_action_to_init(self) -> None:
+        """Remet le bouton en mode Initialiser."""
+        self._validation_progress.hide()
+        self._action_btn.setText("Initialiser (nombre de musiques, liens valides / non valides)")
+        self._action_btn.setObjectName("")
+        self._action_btn.style().unpolish(self._action_btn)
+        self._action_btn.style().polish(self._action_btn)
+        self._action_btn.setEnabled(True)
+
+    def _switch_action_to_start(self) -> None:
+        """Passe le bouton en mode Demarrer le telechargement."""
+        self._action_btn.setText("Demarrer le telechargement")
+        self._action_btn.setObjectName("startButton")
+        self._action_btn.setEnabled(True)
+        self._action_btn.style().unpolish(self._action_btn)
+        self._action_btn.style().polish(self._action_btn)
+
+    def _on_action_clicked(self) -> None:
+        """Un seul bouton: init si pas encore valide, demarrage sinon."""
+        if self._valid_urls:
+            self._on_start_download()
+        else:
+            self._on_init()
 
     def _on_init(self) -> None:
         path = self._file_edit.text().strip()
@@ -187,11 +255,14 @@ class MainWindow(QMainWindow):
         self._urls = parse_urls_from_file(path)
         if not self._urls:
             self._stats_label.setText("Aucune URL YouTube trouvee dans le fichier.")
-            self._start_btn.setEnabled(False)
+            self._action_btn.setEnabled(True)
             return
 
         self._stats_label.setText("Validation des liens en cours...")
-        self._init_btn.setEnabled(False)
+        self._action_btn.setEnabled(False)
+        self._validation_progress.setRange(0, len(self._urls))
+        self._validation_progress.setValue(0)
+        self._validation_progress.show()
         self._validation_worker = ValidationWorker(self._urls, self)
         self._validation_worker.progress.connect(self._on_validation_progress)
         self._validation_worker.finished.connect(self._on_validation_finished)
@@ -199,15 +270,19 @@ class MainWindow(QMainWindow):
 
     def _on_validation_progress(self, current: int, total: int, url: str) -> None:
         self._stats_label.setText(f"Validation: {current} / {total} liens...")
+        self._validation_progress.setValue(current)
 
     def _on_validation_finished(self, result: ValidationResult) -> None:
         self._validation_worker = None
-        self._init_btn.setEnabled(True)
+        self._validation_progress.hide()
         self._valid_urls = result.valid
         self._stats_label.setText(
             f"Total: {result.total} | Valides: {result.valid_count} | Invalides: {result.invalid_count}"
         )
-        self._start_btn.setEnabled(result.valid_count > 0)
+        if result.valid_count > 0:
+            self._switch_action_to_start()
+        else:
+            self._action_btn.setEnabled(True)
 
     def _on_start_download(self) -> None:
         if not self._valid_urls:
@@ -215,8 +290,8 @@ class MainWindow(QMainWindow):
         out_dir = self._config["downloads_dir"]
         Path(out_dir).mkdir(parents=True, exist_ok=True)
 
-        self._start_btn.setEnabled(False)
-        self._start_btn.setText("Telechargement en cours...")
+        self._action_btn.setEnabled(False)
+        self._action_btn.setText("Telechargement en cours...")
 
         self._progress_window = ProgressWindow(
             self, title="Progression", downloads_dir=out_dir
@@ -227,6 +302,7 @@ class MainWindow(QMainWindow):
         self._download_worker = DownloadWorker(
             self._valid_urls,
             out_dir,
+            self._config.get("max_concurrent_downloads", 3),
             self,
         )
         self._download_worker.progress.connect(self._progress_window.update_progress)
@@ -235,8 +311,8 @@ class MainWindow(QMainWindow):
 
     def _on_download_finished(self, downloaded: int, errors: int) -> None:
         self._download_worker = None
-        self._start_btn.setEnabled(True)
-        self._start_btn.setText("Demarrer le telechargement")
+        self._action_btn.setEnabled(True)
+        self._action_btn.setText("Demarrer le telechargement")
         if self._progress_window:
             self._progress_window.set_finished(downloaded, errors)
             self._progress_window = None

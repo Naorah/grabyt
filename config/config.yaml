@@ -5,3 +5,4 @@
 app_name: "GRABYT"
 default_urls_file: "urls.txt"
 downloads_dir: "downloads"
+max_concurrent_downloads: 3

@@ -1,8 +1,46 @@
 # Icones SVG pour la barre de titre et l'application.
+# L'icône de l'app est chargée depuis assets/favicon.svg en priorité, sinon assets/icon.ico.
 
-from PyQt6.QtCore import QByteArray, QRectF
+import os
+import sys
+
+from PyQt6.QtCore import QByteArray, QRectF, QSize
 from PyQt6.QtGui import QIcon, QImage, QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
+
+
+def _assets_dir() -> str:
+    """Répertoire assets (à la racine du projet ou dans le bundle PyInstaller si frozen)."""
+    if getattr(sys, "frozen", False):
+        # PyInstaller extrait les datas dans _MEIPASS (onefile) ou à côté de l'exe (onedir)
+        base = getattr(sys, "_MEIPASS", os.path.dirname(sys.executable))
+        return os.path.join(base, "assets")
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    return os.path.join(root, "assets")
+
+
+def _app_icon_svg_path() -> str | None:
+    """Chemin vers assets/favicon.svg si le fichier existe (prioritaire)."""
+    path = os.path.join(_assets_dir(), "favicon.svg")
+    return path if os.path.isfile(path) else None
+
+
+def _app_icon_path() -> str | None:
+    """Chemin vers assets/icon.ico si le fichier existe (fallback)."""
+    path = os.path.join(_assets_dir(), "icon.ico")
+    return path if os.path.isfile(path) else None
+
+
+def _load_app_icon_svg_bytes() -> bytes | None:
+    """Charge le contenu de assets/favicon.svg."""
+    path = _app_icon_svg_path()
+    if not path:
+        return None
+    try:
+        with open(path, "rb") as f:
+            return f.read()
+    except OSError:
+        return None
 
 
 def _pixmap_from_svg(svg_bytes: bytes, size: int, color: str) -> QPixmap:
@@ -43,11 +81,41 @@ SVG_HISTORY = b"""<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
 APP_ICON_SIZE = 20
 
 
+def get_app_icon() -> QIcon:
+    """
+    Retourne l'icône application pour setWindowIcon.
+    Priorité: assets/favicon.svg, puis assets/icon.ico.
+    """
+    svg_bytes = _load_app_icon_svg_bytes()
+    if svg_bytes:
+        icon = QIcon()
+        for s in (16, 32, 48, 64, 128, 256):
+            pix = _pixmap_from_svg(svg_bytes, s, "#000")
+            if not pix.isNull():
+                icon.addPixmap(pix)
+        if not icon.isNull():
+            return icon
+    path = _app_icon_path()
+    return QIcon(path) if path else QIcon()
+
+
 def get_app_icon_pixmap(size: int = APP_ICON_SIZE, color: str = "#2c2c2c") -> QPixmap:
     """
-    Retourne le pixmap de l'icone application pour le header.
-    A appeler apres creation de QApplication.
+    Retourne le pixmap de l'icone application pour le header (barre de titre).
+    Priorité: assets/favicon.svg, puis assets/icon.ico, sinon SVG embarqué.
     """
+    svg_bytes = _load_app_icon_svg_bytes()
+    if svg_bytes:
+        pix = _pixmap_from_svg(svg_bytes, size, "#000")
+        if not pix.isNull():
+            return pix
+    path = _app_icon_path()
+    if path:
+        icon = QIcon(path)
+        if not icon.isNull():
+            pix = icon.pixmap(QSize(size, size))
+            if not pix.isNull():
+                return pix
     return _pixmap_from_svg(SVG_APP, size, color)
 
 

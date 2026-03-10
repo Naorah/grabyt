@@ -4,10 +4,11 @@
 import os
 import sys
 
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QApplication
 
 from src.config_loader import load_config
+from src.ui.icons import get_app_icon
 from src.ui.main_window import MainWindow
 
 # Contenu par defaut du fichier URLs (lignes # = commentaires, ignorees par le parser)
@@ -35,15 +36,6 @@ def _ensure_default_urls_file(config: dict) -> None:
             f.write(DEFAULT_URLS_CONTENT)
 
 
-def _app_icon() -> QIcon:
-    """Icône pour la fenêtre et la barre des tâches (Windows)."""
-    if getattr(sys, "frozen", False):
-        return QIcon(sys.executable)
-    root = os.path.dirname(os.path.abspath(__file__))
-    path = os.path.join(root, "assets", "icon.ico")
-    return QIcon(path) if os.path.isfile(path) else QIcon()
-
-
 def main() -> None:
     config = load_config()
     _ensure_default_urls_file(config)
@@ -51,7 +43,7 @@ def main() -> None:
     font = QFont("Segoe UI", 9)
     app.setFont(font)
 
-    icon = _app_icon()
+    icon = get_app_icon()
     if not icon.isNull():
         app.setWindowIcon(icon)
 

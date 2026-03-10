@@ -1,4 +1,4 @@
-# Genere assets/icon.ico a partir du SVG de l'application (pour l'exe).
+# Genere assets/icon.ico a partir de assets/favicon.svg (pour l'exe Windows).
 # Lance avec: python scripts/build_icon.py
 # Necessite: PyQt6, Pillow
 
@@ -10,19 +10,25 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
-from PyQt6.QtCore import QByteArray, QBuffer, QIODevice, QRectF
+from PyQt6.QtCore import QBuffer, QByteArray, QIODevice, QRectF
 from PyQt6.QtGui import QImage, QPainter
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import QApplication
 
-from src.ui.icons import SVG_APP
-
 
 def main() -> None:
     app = QApplication(sys.argv)
-    color = "#2c2c2c"
-    colored = SVG_APP.replace(b"currentColor", color.encode())
-    renderer = QSvgRenderer(QByteArray(colored))
+
+    svg_path = project_root / "assets" / "favicon.svg"
+    if not svg_path.is_file():
+        print(f"Erreur: {svg_path} introuvable. Placez favicon.svg dans assets/.")
+        sys.exit(1)
+
+    svg_bytes = svg_path.read_bytes()
+    renderer = QSvgRenderer(QByteArray(svg_bytes))
+    if not renderer.isValid():
+        print("Erreur: favicon.svg invalide ou non reconnu.")
+        sys.exit(1)
 
     size = 256
     image = QImage(size, size, QImage.Format.Format_ARGB32)

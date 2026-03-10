@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.download_manager import get_history_entries, HistoryEntry
+from src.ui.icons import get_app_icon
 from src.ui.styles import MAIN_STYLESHEET, HISTORY_SCROLLBAR_STYLE
 from src.ui.title_bar import TitleBar
 
@@ -79,6 +80,9 @@ class HistoryWindow(QWidget):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
         self.setMinimumSize(500, 400)
         self.resize(560, 480)
+        _icon = get_app_icon()
+        if not _icon.isNull():
+            self.setWindowIcon(_icon)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

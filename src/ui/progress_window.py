@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.downloader import DownloadProgress
 from src.ui.styles import MAIN_STYLESHEET
+from src.ui.icons import get_app_icon
 from src.ui.title_bar import TitleBar
 
 
@@ -40,6 +41,9 @@ class ProgressWindow(QWidget):
         self.setMinimumSize(420, 280)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
         self._downloads_dir = downloads_dir
+        _icon = get_app_icon()
+        if not _icon.isNull():
+            self.setWindowIcon(_icon)
 
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)

@@ -8,6 +8,8 @@ block_cipher = None
 
 _spec_dir = os.path.dirname(os.path.abspath(SPEC))
 icon_path = os.path.normpath(os.path.join(_spec_dir, 'assets', 'icon.ico'))
+_assets_dir = os.path.join(_spec_dir, 'assets')
+datas_assets = [(_assets_dir, 'assets')] if os.path.isdir(_assets_dir) else []
 
 # Modules PyQt6 non utilises + imageio_ffmpeg (exe leger, ffmpeg doit etre installe)
 _excludes_qt = [
@@ -27,7 +29,7 @@ a = Analysis(
     ["main.py"],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=datas_assets,
     hiddenimports=[
         "yaml",
         "PyQt6.QtSvg",
@@ -51,7 +53,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name="GrabYT",
+    name="GrabYT-slim",
     icon=icon_path if os.path.isfile(icon_path) else None,
     debug=False,
     bootloader_ignore_signals=False,

@@ -1,7 +1,10 @@
 # Lecture et extraction des URLs depuis un fichier texte.
+# Encodage auto: UTF-8 BOM, UTF-8, CP1252.
 
 import re
 from pathlib import Path
+
+from src.file_encoding import read_text_auto_encoding
 
 
 # Pattern pour les URLs YouTube (watch, shorts, embed, etc.)
@@ -13,25 +16,22 @@ YOUTUBE_URL_PATTERN = re.compile(
 def parse_urls_from_file(filepath: str | Path) -> list[str]:
     """
     Lit un fichier et en extrait toutes les URLs YouTube (une par ligne ou inline).
+    Encodage detecte automatiquement (UTF-8 BOM, UTF-8, CP1252).
     Retourne une liste d'URLs normalisees, sans doublons, dans l'ordre d'apparition.
     """
-    path = Path(filepath)
-    if not path.exists():
-        return []
-
+    content, _ = read_text_auto_encoding(filepath)
     urls: list[str] = []
     seen: set[str] = set()
 
-    with open(path, encoding="utf-8", errors="replace") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            for match in YOUTUBE_URL_PATTERN.finditer(line):
-                url = _normalize_url(match.group(0))
-                if url and url not in seen:
-                    seen.add(url)
-                    urls.append(url)
+    for line in content.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        for match in YOUTUBE_URL_PATTERN.finditer(line):
+            url = _normalize_url(match.group(0))
+            if url and url not in seen:
+                seen.add(url)
+                urls.append(url)
 
     return urls
 

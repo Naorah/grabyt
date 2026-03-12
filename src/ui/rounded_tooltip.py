@@ -47,7 +47,7 @@ class RoundedTooltip(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         font = self.font()
-        font.setPointSize(12)
+        font.setPointSize(10)
         font.setFamily("Segoe UI")
         self.setFont(font)
         fm = self.fontMetrics()

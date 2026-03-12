@@ -16,8 +16,9 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.downloader import DownloadProgress
-from src.ui.styles import MAIN_STYLESHEET
+from src.i18n import t
 from src.ui.icons import get_app_icon
+from src.ui.styles import MAIN_STYLESHEET
 from src.ui.title_bar import TitleBar
 
 
@@ -57,12 +58,13 @@ class ProgressWindow(QWidget):
         content_layout.setSpacing(16)
         content_layout.setContentsMargins(24, 24, 24, 24)
 
-        process_group = QGroupBox("Process")
+        process_group = QGroupBox(t("process_group"))
         process_group.setObjectName("processGroup")
         layout = QVBoxLayout(process_group)
         layout.setSpacing(16)
 
-        layout.addWidget(QLabel("En cours"))
+        self._status_label = QLabel(t("in_progress"))
+        layout.addWidget(self._status_label)
         self._current_track_label = QLabel("--")
         self._current_track_label.setObjectName("trackLabel")
         self._current_track_label.setWordWrap(True)
@@ -71,7 +73,7 @@ class ProgressWindow(QWidget):
 
         row_avancement = QHBoxLayout()
         row_avancement.setSpacing(8)
-        row_avancement.addWidget(QLabel("Avancement"))
+        row_avancement.addWidget(QLabel(t("avancement")))
         self._current_percent_label = QLabel("0 %")
         self._current_percent_label.setMinimumWidth(40)
         row_avancement.addWidget(self._current_percent_label)
@@ -114,7 +116,7 @@ class ProgressWindow(QWidget):
         row_counts.addStretch()
         layout.addLayout(row_counts)
 
-        self._eta_label = QLabel("ETA: --")
+        self._eta_label = QLabel(t("eta_none"))
         self._eta_label.setObjectName("secondaryLabel")
         layout.addWidget(self._eta_label)
 
@@ -123,7 +125,7 @@ class ProgressWindow(QWidget):
         buttons_layout.setContentsMargins(0, 16, 0, 0)
         buttons_layout.setSpacing(12)
         buttons_layout.addStretch()
-        self._open_folder_btn = QPushButton("Vers les musiques")
+        self._open_folder_btn = QPushButton(t("vers_musiques"))
         self._open_folder_btn.setObjectName("startButton")
         self._open_folder_btn.setEnabled(False)
         self._open_folder_btn.clicked.connect(self._on_open_folder)
@@ -155,14 +157,20 @@ class ProgressWindow(QWidget):
         if prog.eta_seconds is not None and prog.eta_seconds >= 0:
             eta_m = int(prog.eta_seconds // 60)
             eta_s = int(prog.eta_seconds % 60)
-            self._eta_label.setText(f"ETA: {eta_m:02d}:{eta_s:02d}")
+            self._eta_label.setText(t("eta", eta=f"{eta_m:02d}:{eta_s:02d}"))
         else:
-            self._eta_label.setText("ETA: --")
+            self._eta_label.setText(t("eta_none"))
 
-    def set_finished(self, downloaded: int, errors: int) -> None:
-        """Affiche l'etat final et active le bouton Vers les musiques."""
+    def set_finished(self, downloaded: int, errors: int, total: int = 0) -> None:
+        """Affiche l'etat final (Termine a X%) et active le bouton Vers les musiques."""
         self._progress_bar.setValue(100)
-        self._eta_label.setText("Termine.")
+        self._current_percent_label.setText("100 %")
+        self._status_label.setText(t("operation_terminee"))
+        if total > 0:
+            pct = 100.0 * downloaded / total
+            self._eta_label.setText(t("termine_pct", pct=pct, ok=downloaded, total=total))
+        else:
+            self._eta_label.setText(t("termine"))
         self._count_dl_label.setText(str(downloaded))
         self._count_err_label.setText(str(errors))
         self._count_rest_label.setText("0")
@@ -170,11 +178,12 @@ class ProgressWindow(QWidget):
 
     def reset(self) -> None:
         """Reinitialise les champs avant un nouveau telechargement."""
+        self._status_label.setText(t("in_progress"))
         self._current_track_label.setText("--")
         self._current_percent_label.setText("0 %")
         self._progress_bar.setValue(0)
         self._count_dl_label.setText("0")
         self._count_err_label.setText("0")
         self._count_rest_label.setText("0")
-        self._eta_label.setText("ETA: --")
+        self._eta_label.setText(t("eta_none"))
         self._open_folder_btn.setEnabled(False)

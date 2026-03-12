@@ -17,8 +17,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from notifypy import Notify
 
 from src.config_loader import load_config
+from src.i18n import t
 from src.core.download_manager import get_download_manager
 from src.core.downloader import DownloadProgress
 from src.core.url_parser import parse_urls_from_file
@@ -111,13 +113,13 @@ class MainWindow(QMainWindow):
         content_layout.setContentsMargins(24, 24, 24, 24)
 
         # Selection du fichier
-        file_group = QGroupBox("Fichier de liens")
+        file_group = QGroupBox(t("file_group_title"))
         file_layout = QVBoxLayout(file_group)
         row_file = QHBoxLayout()
         self._file_edit = QLineEdit()
-        self._file_edit.setPlaceholderText("Chemin vers le fichier URLs...")
+        self._file_edit.setPlaceholderText(t("file_placeholder"))
         self._file_edit.setText(self._urls_file)
-        self._browse_btn = QPushButton("Parcourir")
+        self._browse_btn = QPushButton(t("browse"))
         self._browse_btn.clicked.connect(self._on_browse)
         self._open_file_btn = QPushButton()
         self._open_file_btn.setObjectName("openFileButton")
@@ -131,9 +133,9 @@ class MainWindow(QMainWindow):
         content_layout.addWidget(file_group)
 
         # Initialisation: bouton unique (init puis demarrage) + historique a droite
-        init_group = QGroupBox("Initialisation")
+        init_group = QGroupBox(t("init_group_title"))
         init_layout = QVBoxLayout(init_group)
-        self._stats_label = QLabel("Aucune initialisation effectuee.")
+        self._stats_label = QLabel(t("stats_none"))
         self._stats_label.setObjectName("statsLabel")
         self._stats_label.setWordWrap(True)
         init_layout.addWidget(self._stats_label)
@@ -147,7 +149,7 @@ class MainWindow(QMainWindow):
         init_layout.addWidget(self._validation_progress)
 
         action_row = QHBoxLayout()
-        self._action_btn = QPushButton("Initialiser (nombre de musiques, liens valides / non valides)")
+        self._action_btn = QPushButton(t("init_button"))
         self._action_btn.clicked.connect(self._on_action_clicked)
         action_row.addWidget(self._action_btn)
 
@@ -164,8 +166,8 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(MAIN_STYLESHEET)
 
         # Tooltips arrondis (fenêtre à masque) pour les boutons circulaires
-        self._open_file_tooltip = RoundedTooltip("Ouvrir le fichier dans l'éditeur par défaut")
-        self._history_tooltip = RoundedTooltip("Historique des telechargements")
+        self._open_file_tooltip = RoundedTooltip(t("tooltip_open_file"))
+        self._history_tooltip = RoundedTooltip(t("tooltip_history"))
         self._tooltip_map: dict[QWidget, RoundedTooltip] = {
             self._open_file_btn: self._open_file_tooltip,
             self._history_btn: self._history_tooltip,
@@ -207,7 +209,7 @@ class MainWindow(QMainWindow):
     def _on_browse(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self,
-            "Choisir le fichier de liens",
+            t("browse_dialog_title"),
             str(Path(self._file_edit.text()).parent) if self._file_edit.text() else "",
             "Fichiers texte (*.txt);;Tous (*)",
         )
@@ -216,13 +218,13 @@ class MainWindow(QMainWindow):
             self._urls_file = path
             self._urls = []
             self._valid_urls = []
-            self._stats_label.setText("Fichier modifie. Reinitialiser pour mettre a jour les statistiques.")
+            self._stats_label.setText(t("stats_file_changed"))
             self._switch_action_to_init()
 
     def _switch_action_to_init(self) -> None:
         """Remet le bouton en mode Initialiser."""
         self._validation_progress.hide()
-        self._action_btn.setText("Initialiser (nombre de musiques, liens valides / non valides)")
+        self._action_btn.setText(t("init_button"))
         self._action_btn.setObjectName("")
         self._action_btn.style().unpolish(self._action_btn)
         self._action_btn.style().polish(self._action_btn)
@@ -230,7 +232,7 @@ class MainWindow(QMainWindow):
 
     def _switch_action_to_start(self) -> None:
         """Passe le bouton en mode Demarrer le telechargement."""
-        self._action_btn.setText("Demarrer le telechargement")
+        self._action_btn.setText(t("start_button"))
         self._action_btn.setObjectName("startButton")
         self._action_btn.setEnabled(True)
         self._action_btn.style().unpolish(self._action_btn)
@@ -246,19 +248,19 @@ class MainWindow(QMainWindow):
     def _on_init(self) -> None:
         path = self._file_edit.text().strip()
         if not path:
-            self._stats_label.setText("Veuillez selectionner un fichier.")
+            self._stats_label.setText(t("stats_select_file"))
             return
         if not Path(path).exists():
-            self._stats_label.setText("Le fichier specifie n'existe pas.")
+            self._stats_label.setText(t("stats_file_missing"))
             return
 
         self._urls = parse_urls_from_file(path)
         if not self._urls:
-            self._stats_label.setText("Aucune URL YouTube trouvee dans le fichier.")
+            self._stats_label.setText(t("stats_no_urls"))
             self._action_btn.setEnabled(True)
             return
 
-        self._stats_label.setText("Validation des liens en cours...")
+        self._stats_label.setText(t("stats_validation"))
         self._action_btn.setEnabled(False)
         self._validation_progress.setRange(0, len(self._urls))
         self._validation_progress.setValue(0)
@@ -269,7 +271,7 @@ class MainWindow(QMainWindow):
         self._validation_worker.start()
 
     def _on_validation_progress(self, current: int, total: int, url: str) -> None:
-        self._stats_label.setText(f"Validation: {current} / {total} liens...")
+        self._stats_label.setText(t("validation_progress", current=current, total=total))
         self._validation_progress.setValue(current)
 
     def _on_validation_finished(self, result: ValidationResult) -> None:
@@ -277,7 +279,7 @@ class MainWindow(QMainWindow):
         self._validation_progress.hide()
         self._valid_urls = result.valid
         self._stats_label.setText(
-            f"Total: {result.total} | Valides: {result.valid_count} | Invalides: {result.invalid_count}"
+            t("stats_format", total=result.total, valid=result.valid_count, invalid=result.invalid_count)
         )
         if result.valid_count > 0:
             self._switch_action_to_start()
@@ -291,10 +293,10 @@ class MainWindow(QMainWindow):
         Path(out_dir).mkdir(parents=True, exist_ok=True)
 
         self._action_btn.setEnabled(False)
-        self._action_btn.setText("Telechargement en cours...")
+        self._action_btn.setText(t("downloading"))
 
         self._progress_window = ProgressWindow(
-            self, title="Progression", downloads_dir=out_dir
+            self, title=t("progress_window_title"), downloads_dir=out_dir
         )
         self._progress_window.reset()
         self._progress_window.show()
@@ -312,7 +314,22 @@ class MainWindow(QMainWindow):
     def _on_download_finished(self, downloaded: int, errors: int) -> None:
         self._download_worker = None
         self._action_btn.setEnabled(True)
-        self._action_btn.setText("Demarrer le telechargement")
+        self._action_btn.setText(t("start_button"))
+        total = len(self._valid_urls) if self._valid_urls else 0
         if self._progress_window:
-            self._progress_window.set_finished(downloaded, errors)
+            self._progress_window.set_finished(downloaded, errors, total=total)
             self._progress_window = None
+        # Notification fin de batch via notification système
+        if total > 0:
+            pct = 100.0 * downloaded / total
+            msg = t("termine_pct", pct=pct, ok=downloaded, total=total)
+        else:
+            msg = t("termine")
+        notification = Notify()
+        notification.title = self.windowTitle()
+        notification.message = msg
+        try:
+            notification.send()
+        except Exception:
+            # On ignore les erreurs de notification pour ne pas interrompre le flux
+            pass

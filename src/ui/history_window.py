@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 )
 
 from src.core.download_manager import get_history_entries, HistoryEntry
+from src.i18n import t
 from src.ui.icons import get_app_icon
 from src.ui.styles import MAIN_STYLESHEET, HISTORY_SCROLLBAR_STYLE
 from src.ui.title_bar import TitleBar
@@ -76,7 +77,7 @@ class HistoryWindow(QWidget):
     def __init__(self, downloads_dir: str | Path, parent: QWidget | None = None):
         super().__init__(parent)
         self.setObjectName("historyWindow")
-        self.setWindowTitle("Historique")
+        self.setWindowTitle(t("history_title"))
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
         self.setMinimumSize(500, 400)
         self.resize(560, 480)
@@ -88,7 +89,7 @@ class HistoryWindow(QWidget):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        self._title_bar = TitleBar(self, title="Historique")
+        self._title_bar = TitleBar(self, title=t("history_title"))
         main_layout.addWidget(self._title_bar)
 
         scroll = QScrollArea()
@@ -121,7 +122,7 @@ class HistoryWindow(QWidget):
             card = HistoryCard(e)
             self._list_layout.insertWidget(self._list_layout.count() - 1, card)
         if not entries:
-            empty = QLabel("Aucun telechargement dans l'historique.")
+            empty = QLabel(t("history_empty"))
             empty.setObjectName("secondaryLabel")
             self._list_layout.insertWidget(0, empty)
 

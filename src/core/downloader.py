@@ -116,6 +116,7 @@ class Downloader:
             ],
             "progress_hooks": [progress_hook],
             "quiet": True,
+            "no_warnings": True,
         }
         if _FFMPEG_EXE:
             opts["ffmpeg_location"] = _FFMPEG_EXE

@@ -13,6 +13,7 @@ from typing import Callable
 import yt_dlp
 
 from src.core.downloader import DownloadProgress
+from src.logger import get_logger
 
 try:
     import imageio_ffmpeg
@@ -22,6 +23,8 @@ except (ImportError, RuntimeError):
 
 DOWNLOAD_JSON_FILENAME = "download.json"
 MAX_RETRIES = 3
+
+_log = get_logger(__name__)
 
 
 @dataclass
@@ -113,6 +116,7 @@ def _download_one(
     opts = {
         "format": "bestaudio/best",
         "outtmpl": out_tmpl,
+        "continue_dl": True,
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -122,6 +126,7 @@ def _download_one(
         ],
         "progress_hooks": [progress_hook],
         "quiet": True,
+        "no_warnings": True,
     }
     if ffmpeg_exe:
         opts["ffmpeg_location"] = ffmpeg_exe
@@ -131,7 +136,8 @@ def _download_one(
             ydl.download([url])
     except yt_dlp.utils.DownloadCancelled:
         return False, None, 0
-    except Exception:
+    except Exception as e:
+        _log.debug("download_failed url=%s error=%s", url[:50], str(e))
         return False, None, 0
 
     final_path = last_file_ref[-1] if last_file_ref else None
@@ -222,11 +228,15 @@ class DownloadManager:
                     url, output_dir, _FFMPEG_EXE, one_progress, cancel_check, last_file
                 )
                 if ok:
+                    _log.info("download_ok url=%s filename=%s", url[:50], filename)
                     return True, filename, size
                 if self._cancelled:
                     return False, None, 0
+                _log.debug("download_retry url=%s attempt=%s", url[:50], attempt + 1)
+            _log.warning("download_failed url=%s after %s retries", url[:50], MAX_RETRIES)
             return False, None, 0
 
+        _log.info("batch_start total=%s output_dir=%s", len(urls), str(output_dir))
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
             futures = {executor.submit(do_one, url): url for url in urls}
             for future in as_completed(futures):
@@ -259,7 +269,9 @@ class DownloadManager:
         self._eta_seconds = None
         self._emit_progress()
         with self._lock:
-            return self._downloaded_count, self._error_count
+            d, e = self._downloaded_count, self._error_count
+        _log.info("batch_finished downloaded=%s errors=%s total=%s", d, e, len(urls))
+        return d, e
 
     def cancel(self) -> None:
         self._cancelled = True

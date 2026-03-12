@@ -6,7 +6,10 @@ from typing import Callable
 import yt_dlp
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from src.logger import get_logger
+
 DEFAULT_VALIDATION_WORKERS = 6
+_log = get_logger(__name__)
 
 
 def _validate_one(url: str, opts: dict) -> tuple[str, bool]:
@@ -58,6 +61,7 @@ def validate_urls(
     }
 
     max_workers = min(max_workers, max(1, total))
+    _log.info("validation_start total=%s", total)
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {executor.submit(_validate_one, url, opts): url for url in urls}
         for future in as_completed(futures):
@@ -74,4 +78,5 @@ def validate_urls(
             if progress_callback:
                 progress_callback(done, total, url)
 
+    _log.info("validation_finished valid=%s invalid=%s total=%s", len(valid), len(invalid), total)
     return ValidationResult(valid=valid, invalid=invalid, total=total)

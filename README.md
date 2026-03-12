@@ -4,113 +4,143 @@
   <img src="assets/favicon.svg" alt="GrabYT" width="96" height="96"/>
 </p>
 
-Application de bureau pour télécharger des vidéos ou audios depuis YouTube à partir d’un fichier d’URLs. Interface PyQt6 (fenêtres sans bordure, thème pastel), moteur yt-dlp.
+Desktop application to download YouTube videos or audio tracks from a file of URLs. PyQt6 interface (borderless windows, pastel theme), backed by yt-dlp.
 
 ---
 
-## Fonctionnalités
+## Features
 
-- **Fichier d’URLs** : un fichier texte (par défaut `urls.txt`) contenant une URL YouTube par ligne ; les lignes commençant par `#` sont ignorées. Choix du fichier et ouverture dans l’éditeur par défaut depuis l’interface.
-- **Validation** : avant téléchargement, initialisation qui vérifie les liens et affiche le nombre total, valides et invalides, avec une barre de progression pendant l’analyse.
-- **Téléchargement** : lancement en un clic après validation ; progression détaillée (piste en cours, pourcentage, ETA) dans une fenêtre dédiée ; annulation possible.
-- **Historique** : fenêtre listant les téléchargements passés (depuis `download.json`) avec accès rapide au lien YouTube de chaque entrée.
-- **Interface** : barre de titre personnalisée (déplacement, minimiser/restaurer/fermer), icône d’application depuis `assets/favicon.svg`, tooltips arrondis pour les boutons circulaires, thème cohérent sur toutes les fenêtres.
+- **URL file**: a text file (default `urls.txt`) with one YouTube URL per line; lines starting with `#` are ignored. You can choose the file and open it in your default editor directly from the UI.
+- **Validation**: before downloading, an initialization step validates all links and displays the total, valid and invalid counts, with a progress bar while scanning.
+- **Download**: one-click start once validation is done; detailed progress (current track, percentage, ETA) in a dedicated window; cancellation supported.
+- **History**: a window listing past downloads (from `download.json`) with quick access to the YouTube link of each entry.
+- **Interface**: custom title bar (move, minimize/restore/close), application icon from `assets/favicon.svg`, rounded tooltips for circular buttons, consistent theme across all windows.
+- **Languages**: UI available in French, English, German or Spanish (see `language` in configuration).
+- **URL file encoding**: automatic detection of text encoding (UTF-8, UTF-8 BOM, CP1252).
+- **Logs**: structured logs (configurable level and optional file), written by default to `log/log.txt`.
+- **Update check**: optional check for a new version on startup (JSON URL in config).
+- **Batch completion**: system notification (via `notify-py`) showing the percentage of successful downloads; interrupted downloads can be resumed (yt-dlp) and each URL is retried up to 3 times on error.
 
 ---
 
-## Utilisation
+## Usage
 
-1. **Lancer l’application**  
-   Exécutable : `dist\GrabYT-full.exe` ou `dist\GrabYT-slim.exe` selon le build. En développement : `python main.py`.
+1. **Run the application**  
+   Executable: `dist\GrabYT-full.exe` or `dist\GrabYT-slim.exe` depending on the build. For development: `python main.py`.
 
-2. **Choisir le fichier d’URLs**  
-   Le champ indique le fichier utilisé (par défaut `urls.txt` à la racine). Utilisez « Parcourir » pour en sélectionner un autre. Le bouton circulaire à droite permet d’ouvrir le fichier dans l’éditeur par défaut.
+2. **Choose the URL file**  
+   The field shows the file in use (default `urls.txt` at the project root). Use “Browse” to select another one. The circular button on the right opens the file in the system default editor.
 
-3. **Initialiser**  
-   Cliquer sur « Initialiser (nombre de musiques, liens valides / non valides) ». La validation des URLs s’effectue et une barre de progression affiche l’avancement. À la fin, les statistiques (total, valides, invalides) s’affichent et le même bouton devient « Démarrer le téléchargement ».
+3. **Initialize**  
+   Click “Initialize (count, valid / invalid links)”. URL validation runs and a progress bar shows how far along it is. When finished, statistics (total, valid, invalid) are displayed and the same button becomes “Start download”.
 
-4. **Démarrer le téléchargement**  
-   Cliquer sur « Démarrer le téléchargement ». Une fenêtre de progression s’ouvre (piste en cours, pourcentage, ETA). À la fin, un bouton permet d’ouvrir le dossier des téléchargements.
+4. **Start the download**  
+   Click “Start download”. A progress window opens (current track, percentage, ETA). At the end, a button lets you open the download folder.
 
-5. **Historique**  
-   Le bouton circulaire « Historique » (à droite du bouton d’action) ouvre la liste des téléchargements passés. Un clic sur une carte ouvre le lien YouTube associé.
+5. **History**  
+   The circular “History” button (to the right of the main action button) opens the list of past downloads. Clicking a card opens the corresponding YouTube link.
 
-**Prérequis (build slim uniquement)** : ffmpeg doit être installé et accessible dans le PATH. Le build « full » inclut ffmpeg (imageio-ffmpeg) et ne nécessite aucune installation supplémentaire.
+**Requirement (slim build only)**: ffmpeg must be installed and available in PATH. The “full” build bundles ffmpeg (via imageio-ffmpeg) and needs no extra system installation.
 
 ---
 
 ## Configuration
 
-Le fichier `config/config.yaml` permet de modifier :
+The `config/config.yaml` file lets you tune:
 
-| Clé | Description | Défaut |
-|-----|-------------|--------|
-| `app_name` | Titre affiché dans la fenêtre principale | `GRABYT` |
-| `default_urls_file` | Fichier d’URLs par défaut | `urls.txt` |
-| `downloads_dir` | Dossier de destination des téléchargements | `downloads` |
-| `max_concurrent_downloads` | Nombre de téléchargements simultanés | `3` |
+| Key | Description | Default |
+|-----|-------------|---------|
+| `app_name` | Title shown in the main window | `GRABYT` |
+| `default_urls_file` | Default URL file | `urls.txt` |
+| `downloads_dir` | Target folder for downloads | `downloads` |
+| `max_concurrent_downloads` | Number of simultaneous downloads | `3` |
+| `language` | UI language: `fr`, `en`, `de`, `es` | `fr` |
+| `version_check_url` | URL of a JSON `{"version": "x.y.z"}` to notify when a new version is available (empty = disabled) | (empty) |
+| `log_level` | Log level: `DEBUG`, `INFO`, `WARNING`, `ERROR` | `INFO` |
+| `log_file` | Log file path (empty = console only) | (empty) |
 
-Les chemins peuvent être relatifs (à la racine du projet ou au répertoire de l’exécutable) ou absolus.
+Paths can be relative (to the project root or to the executable directory) or absolute.
 
 ---
 
 ## Build
 
-Génération des exécutables Windows dans `dist\` :
+Build Windows executables into `dist\`:
 
 ```bash
-build.bat [--build full|slim]
+scripts\build\build.bat [--build full|slim]
 ```
 
 | Option | Description |
 |--------|-------------|
-| `--build full` (défaut) | Exe **portable** : inclut imageio-ffmpeg. Plus lourd, aucune installation de ffmpeg requise. Produit `dist\GrabYT-full.exe`. |
-| `--build slim` | Exe **léger** : sans ffmpeg inclus. ffmpeg doit être installé sur la machine cible. Produit `dist\GrabYT-slim.exe`. |
+| `--build full` (default) | **Portable** exe: bundles imageio-ffmpeg. Heavier, but no ffmpeg installation required. Produces `dist\GrabYT-full.exe`. |
+| `--build slim` | **Slim** exe: does not bundle ffmpeg. ffmpeg must be installed on the target machine. Produces `dist\GrabYT-slim.exe`. |
 
-**Prérequis** : environnement virtuel activé, PyInstaller installé (`pip install pyinstaller`). Le script appelle `scripts/build_icon.py` pour générer `assets/icon.ico` à partir de `assets/favicon.svg` ; si `icon.ico` est absent, l’exe est produit sans icône système. L’application utilise en priorité `assets/favicon.svg` pour l’icône affichée dans l’interface (fenêtres et barre de titre).
+**Full build (full + slim, 4 languages)**: `scripts\packaging\build-all.bat` (Windows) or `scripts/packaging/build-all.sh` (Linux/macOS) runs the full and slim builds, then creates for each language (`fr`, `en`, `de`, `es`) a ready-to-use folder with the exe and a `config/config.yaml` whose language is already set:
+- `dist\full-fr`, `dist\full-en`, `dist\full-de`, `dist\full-es`
+- `dist\slim-fr`, `dist\slim-en`, `dist\slim-de`, `dist\slim-es`
+
+**Prerequisites**: virtual environment activated, PyInstaller installed (`pip install pyinstaller`). The script calls `scripts/build_icon.py` to generate `assets/icon.ico` from `assets/favicon.svg`; if `icon.ico` is missing, the exe is still built but without a Windows shell icon. The application itself primarily uses `assets/favicon.svg` for the UI icon (windows and title bar).
 
 ---
 
-## Structure du projet
+## Project structure
 
 ```
 grabyt/
-  main.py                 # Point d'entrée
-  config/config.yaml      # Configuration
+  main.py                   # Entry point
+  requirements.txt          # Python dependencies
+  README.md                 # This file
+  config/
+    config.yaml             # Configuration (language, logs, version, etc.)
   assets/
-    favicon.svg           # Icône application (prioritaire)
-    icon.ico              # Icône exe (générée par build_icon.py)
+    favicon.svg             # Application icon (preferred in UI)
+    icon.ico                # Executable icon (generated by build_icon.py)
   src/
-    config_loader.py      # Chargement de la config
+    config_loader.py        # Configuration loading
+    file_encoding.py        # Text encoding detection (UTF-8 / BOM / CP1252) for the URL file
+    i18n.py                 # Translations (FR / EN / DE / ES)
+    logger.py               # Structured logging (level, file)
+    version.py              # Current version and update check
     core/
-      download_manager.py # Gestion des téléchargements et historique
-      downloader.py       # Intégration yt-dlp
-      url_parser.py       # Parsing du fichier URLs
-      url_validator.py    # Validation des liens
+      download_manager.py   # Downloads (resume, 3 retries, history)
+      downloader.py         # yt-dlp integration
+      url_parser.py         # URL file parsing (auto encoding)
+      url_validator.py      # URL validation
     ui/
-      main_window.py      # Fenêtre principale
-      progress_window.py  # Fenêtre de progression
-      history_window.py   # Fenêtre historique
-      title_bar.py        # Barre de titre personnalisée
-      icons.py            # Icônes (favicon.svg, icon.ico, SVG internes)
-      rounded_tooltip.py  # Tooltips arrondis
-      styles.py           # Feuilles de style
+      main_window.py        # Main window
+      progress_window.py    # Progress window
+      history_window.py     # History window
+      title_bar.py          # Custom title bar
+      icons.py              # Icons (favicon.svg, icon.ico, internal SVGs)
+      rounded_tooltip.py    # Rounded tooltips
+      styles.py             # Stylesheets
   scripts/
-    build_icon.py         # Génération de icon.ico depuis favicon.svg
-  build_full.spec         # Spec PyInstaller (full)
-  build_slim.spec         # Spec PyInstaller (slim)
-  build.bat               # Script de build Windows
+    build/
+      build_icon.py         # Generate icon.ico from favicon.svg
+      build_full.spec       # PyInstaller spec (full)
+      build_slim.spec       # PyInstaller spec (slim)
+      build.spec            # Generic PyInstaller spec
+      build.bat             # Windows build script (full or slim)
+    packaging/
+      prepare_lang_builds.py # Create language-specific full/slim bundles (after build)
+      build-all.bat          # Build full + slim then 4-language bundles (Windows)
+      build-all.sh           # Build full + slim then 4-language bundles (Linux/macOS)
+      zipversion.bat         # Create zip archives in dist\
+  dist/                     # Built executables
+  build/                    # PyInstaller working directory
+  venv/                     # Virtual environment (optional)
 ```
 
 ---
 
-## Licence
+## License
 
-Ce projet est distribué sous la **licence Apache 2.0**. En résumé :
+This project is distributed under the **Apache 2.0** license. In short:
 
-- **Utilisation, modification et distribution** : vous pouvez utiliser le logiciel, le modifier et le redistribuer (y compris à titre commercial), sous réserve de conserver une copie de la licence et les mentions de copyright.
-- **Attribution** : les redistributions (code source ou binaire) doivent indiquer les changements éventuels et inclure le texte de la licence. Il n’est pas obligatoire de mentionner Apache dans une interface utilisateur.
-- **Brevets** : les contributeurs accordent une licence d’utilisation des brevets qu’ils détiennent sur les apports qu’ils ont fournis.
-- **Sans garantie** : le logiciel est fourni « tel quel », sans garantie d’aucune sorte.
+- **Use, modification and distribution**: you can use, modify and redistribute the software (including commercially), as long as you keep a copy of the license and copyright notices.
+- **Attribution**: redistributions (source or binary) must state any significant changes and include the full license text. You are not required to show “Apache” in your UI.
+- **Patents**: contributors grant a license to any patents they hold that are necessarily infringed by their contributions.
+- **No warranty**: the software is provided “as is”, without any kind of warranty.
 
-Le texte complet est dans le fichier [LICENSE](LICENSE).
+The full text is available in the [LICENSE](LICENSE) file.

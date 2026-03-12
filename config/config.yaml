@@ -1,8 +1,17 @@
-# Configuration de l'application.
-# Modifier app_name pour changer le titre affiche dans la fenetre.
-# ffmpeg est fourni en portable via imageio-ffmpeg (pas d'installation systeme).
-
+# Application configuration.
+# ffmpeg is provided as a portable binary via imageio-ffmpeg (no system installation required).
 app_name: "GRABYT"
 default_urls_file: "urls.txt"
 downloads_dir: "downloads"
 max_concurrent_downloads: 3
+
+# UI language: fr (French), en (English), de (German), es (Spanish)
+language: "fr"
+
+# URL of a JSON used for version checking. Example: {"version": "0.2.0"}
+# Leave empty or remove to disable.
+version_check_url: "https://raw.githubusercontent.com/Naorah/grabyt/main/config/version.json"
+
+# Logs: level (DEBUG, INFO, WARNING, ERROR), optional file (empty = console only)
+log_level: "INFO"
+log_file: "log/log.txt"
